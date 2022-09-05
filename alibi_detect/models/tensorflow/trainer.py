@@ -57,6 +57,11 @@ def trainer(
     callbacks
         Callbacks used during training.
     """
+    
+    _callbacks = tf.keras.callbacks.CallbackList(callbacks,
+                                                    add_history=True,
+                                                    model=model)
+    
     return_xy = False if not isinstance(dataset, tf.keras.utils.Sequence) and y_train is None else True
     if not isinstance(dataset, tf.keras.utils.Sequence):  # create dataset
         train_data = x_train if y_train is None else (x_train, y_train)
@@ -66,15 +71,29 @@ def trainer(
 
     if loss_fn_kwargs:
         loss_fn = partial(loss_fn, **loss_fn_kwargs)
+        
+    logs = {}
+    logs['loss_ma'] = [np.inf, np.inf]
+    
+    _callbacks.on_train_begin(logs=logs)
 
     # iterate over epochs
     for epoch in range(epochs):
+        print(logs)
+        print(callbacks[0].best)
+        _callbacks.on_epoch_begin(epoch, logs=logs)
+        
         if verbose:
             pbar = tf.keras.utils.Progbar(n_minibatch, 1)
         if hasattr(dataset, 'on_epoch_end'):
             dataset.on_epoch_end()
         loss_val_ma = 0.
+        
         for step, data in enumerate(dataset):
+            
+            _callbacks.on_batch_begin(step, logs=logs)
+            _callbacks.on_train_batch_begin(step, logs=logs)
+            
             x, y = data if return_xy else (data, None)
             if isinstance(preprocess_fn, Callable):  # type: ignore
                 x = preprocess_fn(x)
@@ -92,6 +111,12 @@ def trainer(
 
             grads = tape.gradient(loss, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
+
+            logs['loss_ma'] = tf.get_static_value(loss)
+            
+            _callbacks.on_train_batch_end(step, logs=logs)
+            _callbacks.on_batch_end(step, logs=logs)
+            
             if verbose:
                 loss_val = loss.numpy()
                 if loss_val.shape:
@@ -108,3 +133,10 @@ def trainer(
                     log_metric[1](y, y_hat)
                     pbar_values.append((log_metric[0], log_metric[1].result().numpy()))
                 pbar.add(1, values=pbar_values)
+                
+        _callbacks.on_epoch_end(epoch, logs=logs)
+        
+        if model.stop_training:
+            break
+            
+    _callbacks.on_train_end(logs=logs)
