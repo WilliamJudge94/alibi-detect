@@ -79,8 +79,6 @@ def trainer(
 
     # iterate over epochs
     for epoch in range(epochs):
-        print(logs)
-        print(callbacks[0].best)
         _callbacks.on_epoch_begin(epoch, logs=logs)
         
         if verbose:
