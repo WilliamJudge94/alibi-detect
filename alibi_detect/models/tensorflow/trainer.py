@@ -135,6 +135,7 @@ def trainer(
         _callbacks.on_epoch_end(epoch, logs=logs)
         
         if model.stop_training:
+            model.stop_training = False
             break
             
     _callbacks.on_train_end(logs=logs)
