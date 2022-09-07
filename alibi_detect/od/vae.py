@@ -74,6 +74,7 @@ class OutlierVAE(BaseDetector, FitMixin, ThresholdMixin):
 
     def fit(self,
             X: np.ndarray,
+            VAL: np.ndarray,
             loss_fn: tf.keras.losses = elbo,
             optimizer: tf.keras.optimizers = tf.keras.optimizers.Adam(learning_rate=1e-3),
             cov_elbo: dict = dict(sim=.05),
@@ -91,6 +92,8 @@ class OutlierVAE(BaseDetector, FitMixin, ThresholdMixin):
         ----------
         X
             Training batch.
+        VAL
+            validation data.
         loss_fn
             Loss function used for training.
         optimizer
@@ -121,7 +124,8 @@ class OutlierVAE(BaseDetector, FitMixin, ThresholdMixin):
                   'verbose': verbose,
                   'log_metric': log_metric,
                   'callbacks': callbacks, 
-                  'preprocess_fn': preprocess_fn}
+                  'preprocess_fn': preprocess_fn,
+                  'VAL': VAL}
 
         # initialize covariance matrix if elbo loss fn is used
         use_elbo = loss_fn.__name__ == 'elbo'

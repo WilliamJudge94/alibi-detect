@@ -19,7 +19,8 @@ def trainer(
         buffer_size: int = 1024,
         verbose: bool = True,
         log_metric:  Tuple[str, "tf.keras.metrics"] = None,
-        callbacks: tf.keras.callbacks = None
+        callbacks: tf.keras.callbacks = None,
+        VAL = None
 ) -> None:
     """
     Train TensorFlow model.
@@ -110,29 +111,42 @@ def trainer(
             grads = tape.gradient(loss, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-            logs['loss_ma'] = tf.get_static_value(loss)
+            #logs['loss_ma'] = tf.get_static_value(loss)
             
             _callbacks.on_train_batch_end(step, logs=logs)
             _callbacks.on_batch_end(step, logs=logs)
             
-            if verbose:
-                loss_val = loss.numpy()
-                if loss_val.shape:
-                    if loss_val.shape[0] != batch_size:
-                        if len(loss_val.shape) == 1:
-                            shape = (batch_size - loss_val.shape[0], )
-                        elif len(loss_val.shape) == 2:
-                            shape = (batch_size - loss_val.shape[0], loss_val.shape[1])  # type: ignore
-                        add_mean = np.ones(shape) * loss_val.mean()
-                        loss_val = np.r_[loss_val, add_mean]
-                loss_val_ma = loss_val_ma + (loss_val - loss_val_ma) / (step + 1)
-                pbar_values = [('loss_ma', loss_val_ma)]
-                if log_metric is not None:
-                    log_metric[1](y, y_hat)
+
+            loss_val = loss.numpy()
+            if loss_val.shape:
+                if loss_val.shape[0] != batch_size:
+                    if len(loss_val.shape) == 1:
+                        shape = (batch_size - loss_val.shape[0], )
+                    elif len(loss_val.shape) == 2:
+                        shape = (batch_size - loss_val.shape[0], loss_val.shape[1])  # type: ignore
+                    add_mean = np.ones(shape) * loss_val.mean()
+                    loss_val = np.r_[loss_val, add_mean]
+            loss_val_ma = loss_val_ma + (loss_val - loss_val_ma) / (step + 1)
+            pbar_values = [('loss_ma', loss_val_ma)]
+            if log_metric is not None:
+                log_metric[1](y, y_hat)
+                if verbose:
                     pbar_values.append((log_metric[0], log_metric[1].result().numpy()))
+            if verbose:
                 pbar.add(1, values=pbar_values)
-                
+                    
+        logs['loss_ma'] = loss_val_ma
+        
+        pred_VAL = model(VAL)
+        args_val = [VAL, pred_VAL] if tf.is_tensor(pred_VAL) else [VAL] + list(pred_VAL)
+        val_loss = loss_fn(*args_val)
+        logs['val_loss']= tf.get_static_value(val_loss)        
+        
+        if verbose:
+            pbar.add(0, values=[('loss_ma', loss_val_ma), ('val_loss', tf.get_static_value(val_loss))])
+        
         _callbacks.on_epoch_end(epoch, logs=logs)
+
         
         if model.stop_training:
             model.stop_training = False
