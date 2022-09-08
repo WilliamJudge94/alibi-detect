@@ -2,6 +2,7 @@ from functools import partial
 import numpy as np
 import tensorflow as tf
 from typing import Callable, Tuple
+from IPython.core.debugger import set_trace
 
 
 def trainer(
@@ -134,6 +135,7 @@ def trainer(
                     pbar_values.append((log_metric[0], log_metric[1].result().numpy()))
             if verbose:
                 pbar.add(1, values=pbar_values)
+                #set_trace()
                     
         logs['loss_ma'] = loss_val_ma
         
@@ -147,7 +149,7 @@ def trainer(
         
         _callbacks.on_epoch_end(epoch, logs=logs)
 
-        
+
         if model.stop_training:
             model.stop_training = False
             break
