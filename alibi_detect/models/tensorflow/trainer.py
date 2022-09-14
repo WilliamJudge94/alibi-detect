@@ -145,7 +145,9 @@ def trainer(
         logs['val_loss']= tf.get_static_value(val_loss)        
         
         if verbose:
-            pbar.add(0, values=[('loss_ma', loss_val_ma), ('val_loss', tf.get_static_value(val_loss))])
+            pbar.add(0, values=[('loss_ma', loss_val_ma),
+                                ('val_loss', tf.get_static_value(val_loss)),
+                                ('epoch', epoch)])
         
         _callbacks.on_epoch_end(epoch, logs=logs)
 
