@@ -1,3 +1,4 @@
+import pytest, warnings
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Bidirectional, Concatenate, Dense, Flatten, Layer, LSTM
@@ -24,7 +25,9 @@ class Sampling(Layer):
         z_mean, z_log_var = inputs
         batch = tf.shape(z_mean)[0]
         dim = tf.shape(z_mean)[1]
-        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+            
+        epsilon = self.sampling_epsilon_func(shape=(batch, dim))
+
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
 
@@ -51,6 +54,7 @@ class EncoderVAE(Layer):
         self.fc_mean = Dense(latent_dim, activation=None)
         self.fc_log_var = Dense(latent_dim, activation=None)
         self.sampling = Sampling()
+        self.sampling.sampling_epsilon_func = tf.keras.backend.random_normal
 
     def call(self, x: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         x = self.encoder_net(x)
