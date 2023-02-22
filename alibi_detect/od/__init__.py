@@ -21,5 +21,5 @@ __all__ = [
     # "LLR"
 ]
 
-if PROPHET_INSTALLED:
-    __all__ += ["OutlierProphet"]
+# if PROPHET_INSTALLED:
+#     __all__ += ["OutlierProphet"]
