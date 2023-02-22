@@ -41,7 +41,7 @@ setup(
         # https://github.com/SeldonIO/alibi-detect/issues/375 and 387
         "tensorflow>=2.2.0, !=2.6.0, !=2.6.1, <2.10.0",
         "tensorflow_probability>=0.8.0, <0.18.0",
-        #"transformers>=4.0.0, <5.0.0",
+        "transformers>=4.0.0, <5.0.0",
         #"dill>=0.3.0, <0.4.0",
         "tqdm>=4.28.1, <5.0.0",
         #"requests>=2.21.0, <3.0.0",
