@@ -29,7 +29,7 @@ setup(
     python_requires=">=3.7",
     # lower bounds based on Debian Stable versions where available
     install_requires=[
-        "matplotlib>=3.0.0, <4.0.0",
+        #"matplotlib>=3.0.0, <4.0.0",
         "numpy>=1.16.2, <2.0.0",
         "pandas>=0.23.3, <2.0.0",
         #"Pillow>=5.4.1, <10.0.0",
@@ -46,7 +46,7 @@ setup(
         "tqdm>=4.28.1, <5.0.0",
         "requests>=2.21.0, <3.0.0",
         # Avoid 0.54 due to: https://github.com/SeldonIO/alibi/issues/466
-        "numba>=0.50.0, !=0.54.0, <0.56.0",
+        #"numba>=0.50.0, !=0.54.0, <0.56.0",
         "pydantic>=1.8.0, <2.0.0",
         # STC, see https://discuss.python.org/t/adopting-recommending-a-toml-parser/4068
         "toml>=0.10.1, <1.0.0",
