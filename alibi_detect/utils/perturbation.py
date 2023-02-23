@@ -2,15 +2,15 @@ import random
 from io import BytesIO
 from typing import List, Tuple
 
-import cv2
+#import cv2
 import numpy as np
-import skimage as sk
+#import skimage as sk
 import tensorflow as tf
 from alibi_detect.utils.data import Bunch
 from alibi_detect.utils.discretizer import Discretizer
 from alibi_detect.utils.distance import abdm, multidim_scaling
 from alibi_detect.utils.mapping import ohe2ord
-from PIL import Image
+#from PIL import Image
 from scipy.ndimage import zoom
 from scipy.ndimage.interpolation import map_coordinates
 from skimage.filters import gaussian
@@ -56,7 +56,8 @@ def mutate_categorical(X: np.ndarray,
         dtype=tf.int32,
         seed=seed + 1
     )
-    X = tf.math.floormod(tf.cast(X, tf.int32) + mask * possible_mutations, frange[1])
+    X = tf.math.floormod(tf.cast(X, tf.int32) + mask *
+                         possible_mutations, frange[1])
     return tf.cast(X, tf.float32)
 
 
@@ -106,13 +107,16 @@ def apply_mask(X: np.ndarray,
     elif mask_type == 'zero':
         mask = np.ones((n_masks,) + X_shape[1:])
     else:
-        raise ValueError('Only `normal`, `uniform` and `zero` masking available.')
+        raise ValueError(
+            'Only `normal`, `uniform` and `zero` masking available.')
 
     # create noise for mask
     if mask_type == 'normal':
-        noise = np.random.normal(loc=noise_distr[0], scale=noise_distr[1], size=(n_masks,) + mask_size)
+        noise = np.random.normal(
+            loc=noise_distr[0], scale=noise_distr[1], size=(n_masks,) + mask_size)
     elif mask_type == 'uniform':
-        noise = np.random.uniform(low=noise_rng[0], high=noise_rng[1], size=(n_masks,) + mask_size)
+        noise = np.random.uniform(
+            low=noise_rng[0], high=noise_rng[1], size=(n_masks,) + mask_size)
 
     # find upper left coordinate for mask
     if coord is None:
@@ -143,7 +147,8 @@ def apply_mask(X: np.ndarray,
         if mask_type == 'zero':
             X_mask_ = X[_].reshape((1,) + X_shape[1:]) * mask
         else:
-            X_mask_ = np.clip(X[_].reshape((1,) + X_shape[1:]) + mask, clip_rng[0], clip_rng[1])
+            X_mask_ = np.clip(X[_].reshape(
+                (1,) + X_shape[1:]) + mask, clip_rng[0], clip_rng[1])
         X_masks.append(X_mask_)
     X_mask = np.concatenate(X_masks, axis=0)
 
@@ -196,9 +201,11 @@ def inject_outlier_ts(X: np.ndarray,
             np.maximum(outlier_idx - window, 0),
             np.minimum(outlier_idx + window, n_samples)
         ]
-        stdev = np.array([X_outlier[window_idx[0][i]:window_idx[1][i], s].std() for i in range(len(outlier_idx))])
+        stdev = np.array([X_outlier[window_idx[0][i]:window_idx[1][i], s].std()
+                         for i in range(len(outlier_idx))])
         rnd = np.random.normal(size=n_outlier)
-        X_outlier[outlier_idx, s] += np.sign(rnd) * np.maximum(np.abs(rnd * n_std), min_std) * stdev
+        X_outlier[outlier_idx, s] += np.sign(rnd) * \
+            np.maximum(np.abs(rnd * n_std), min_std) * stdev
         is_outlier[outlier_idx] = 1
     if n_dim == 1:
         X_outlier = X_outlier.reshape(n_samples, )
@@ -257,7 +264,8 @@ def inject_outlier_tabular(X: np.ndarray,
     for col in cols:
         outlier_idx = np.sort(random.sample(range(n_samples), n_outlier))
         rnd = np.random.normal(size=n_outlier)
-        X_outlier[outlier_idx, col] += np.sign(rnd) * np.maximum(np.abs(rnd * n_std), min_std) * stdev[col]
+        X_outlier[outlier_idx, col] += np.sign(rnd) * np.maximum(
+            np.abs(rnd * n_std), min_std) * stdev[col]
         is_outlier[outlier_idx] = 1
     if n_dim == 1:
         X_outlier = X_outlier.reshape(n_samples, )
@@ -325,7 +333,8 @@ def inject_outlier_categorical(X: np.ndarray,
             fnames = [str(_) for _ in range(n_ord)]
             disc = Discretizer(X_ord, cols, fnames, percentiles=disc_perc)
             X_bin = disc.discretize(X_ord)
-            cat_vars_bin = {k: len(disc.names[k]) for k in range(n_ord) if k not in cols}
+            cat_vars_bin = {k: len(disc.names[k])
+                            for k in range(n_ord) if k not in cols}
         else:
             X_bin = X_ord
             cat_vars_bin = {}
@@ -334,7 +343,8 @@ def inject_outlier_categorical(X: np.ndarray,
         d_pair = abdm(X_bin, cat_vars_ord, cat_vars_bin)
 
         # multidim scaling
-        feature_range = (np.ones((1, n_ord)) * -1e10, np.ones((1, n_ord)) * 1e10)
+        feature_range = (np.ones((1, n_ord)) * -1e10,
+                         np.ones((1, n_ord)) * 1e10)
         d_abs = multidim_scaling(d_pair,
                                  n_components=2,
                                  use_metric=True,
@@ -512,7 +522,8 @@ def impulse_noise(x: np.ndarray, amount: float, xrange: tuple = None) -> np.ndar
     else:
         xmin, xmax = x.min(), x.max()
     x_sc = (x - xmin) / (xmax - xmin)  # scale to [0,1]
-    x_in = sk.util.random_noise(x_sc, mode='s&p', amount=amount)  # inject noise
+    x_in = sk.util.random_noise(
+        x_sc, mode='s&p', amount=amount)  # inject noise
     x_in = x_in * (xmax - xmin) + xmin  # scale back
     if isinstance(xrange, tuple):
         return np.clip(x_in, xrange[0], xrange[1])
@@ -568,7 +579,8 @@ def clipped_zoom(x: np.ndarray, zoom_factor: float) -> np.ndarray:
     h = x.shape[0]
     ch = int(np.ceil(h / float(zoom_factor)))  # ceil crop height(= crop width)
     top = (h - ch) // 2
-    x = zoom(x[top:top + ch, top:top + ch], (zoom_factor, zoom_factor, 1), order=1)
+    x = zoom(x[top:top + ch, top:top + ch],
+             (zoom_factor, zoom_factor, 1), order=1)
     trim_top = (x.shape[0] - h) // 2  # trim off any extra pixels
     return x[trim_top:trim_top + h, trim_top:trim_top + h]
 
@@ -736,22 +748,26 @@ def plasma_fractal(mapsize: int = 256, wibbledecay: float = 3.) -> np.ndarray:
         cornerref = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
         squareaccum = cornerref + np.roll(cornerref, shift=-1, axis=0)
         squareaccum += np.roll(squareaccum, shift=-1, axis=1)
-        maparray[stepsize // 2:mapsize:stepsize, stepsize // 2:mapsize:stepsize] = wibbledmean(squareaccum)
+        maparray[stepsize // 2:mapsize:stepsize, stepsize //
+                 2:mapsize:stepsize] = wibbledmean(squareaccum)
 
     def filldiamonds():
         """For each diamond of points stepsize apart,
            calculate middle value as mean of points + wibble"""
         mapsize = maparray.shape[0]
-        drgrid = maparray[stepsize // 2:mapsize:stepsize, stepsize // 2:mapsize:stepsize]
+        drgrid = maparray[stepsize // 2:mapsize:stepsize,
+                          stepsize // 2:mapsize:stepsize]
         ulgrid = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
         ldrsum = drgrid + np.roll(drgrid, 1, axis=0)
         lulsum = ulgrid + np.roll(ulgrid, -1, axis=1)
         ltsum = ldrsum + lulsum
-        maparray[0:mapsize:stepsize, stepsize // 2:mapsize:stepsize] = wibbledmean(ltsum)
+        maparray[0:mapsize:stepsize, stepsize //
+                 2:mapsize:stepsize] = wibbledmean(ltsum)
         tdrsum = drgrid + np.roll(drgrid, 1, axis=1)
         tulsum = ulgrid + np.roll(ulgrid, -1, axis=0)
         ttsum = tdrsum + tulsum
-        maparray[stepsize // 2:mapsize:stepsize, 0:mapsize:stepsize] = wibbledmean(ttsum)
+        maparray[stepsize // 2:mapsize:stepsize,
+                 0:mapsize:stepsize] = wibbledmean(ttsum)
 
     while stepsize >= 2:
         fillsquares()
@@ -785,7 +801,9 @@ def fog(x: np.ndarray, fractal_mult: float, wibbledecay: float, xrange: tuple = 
     x, scale_back = scale_minmax(x, xrange)
     max_val = x.max()
     nrows, ncols = x.shape[:2]
-    x_fo = x + fractal_mult * plasma_fractal(wibbledecay=wibbledecay)[:nrows, :ncols][..., np.newaxis]
+    x_fo = x + fractal_mult * \
+        plasma_fractal(wibbledecay=wibbledecay)[
+            :nrows, :ncols][..., np.newaxis]
     x_fo = x_fo * max_val / (max_val + fractal_mult)
     if scale_back:
         x_fo = x_fo * (xrange[1] - xrange[0]) + xrange[0]
@@ -942,7 +960,8 @@ def jpeg_compression(x: np.ndarray, strength: float, xrange: tuple = None) -> np
 
     x = Image.fromarray(x.astype('uint8'), mode='RGB')
     output = BytesIO()
-    x.save(output, 'JPEG', quality=strength)  # type: ignore[attr-defined] # TODO: allow redefinition
+    # type: ignore[attr-defined] # TODO: allow redefinition
+    x.save(output, 'JPEG', quality=strength)
     x = Image.open(output)
     x_jpeg = np.array(x, dtype=np.float32) / 255
     x_jpeg = x_jpeg * (xrange[1] - xrange[0]) + xrange[0]
@@ -983,19 +1002,25 @@ def elastic_transform(x: np.ndarray, mult_dxdy: float, sigma: float,
     center_square = np.asarray(shape_size, dtype=np.float32) // 2
     square_size = min(shape_size) // 3
     pts1 = np.asarray([center_square + square_size,
-                       [center_square[0] + square_size, center_square[1] - square_size],
+                       [center_square[0] + square_size,
+                           center_square[1] - square_size],
                        center_square - square_size], dtype=np.float32)
-    pts2 = pts1 + np.random.uniform(-rnd_rng, rnd_rng, size=pts1.shape).astype(np.float32)
+    pts2 = pts1 + np.random.uniform(-rnd_rng,
+                                    rnd_rng, size=pts1.shape).astype(np.float32)
     M = cv2.getAffineTransform(pts1, pts2)
-    image = cv2.warpAffine(x, M, shape_size[::-1], borderMode=cv2.BORDER_REFLECT_101)
+    image = cv2.warpAffine(
+        x, M, shape_size[::-1], borderMode=cv2.BORDER_REFLECT_101)
     dx = (gaussian(np.random.uniform(-1, 1, size=shape_size),
                    sigma, mode='reflect', truncate=3) * mult_dxdy).astype(np.float32)
     dy = (gaussian(np.random.uniform(-1, 1, size=shape_size),
                    sigma, mode='reflect', truncate=3) * mult_dxdy).astype(np.float32)
     dx, dy = dx[..., np.newaxis], dy[..., np.newaxis]
-    x, y, z = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]), np.arange(shape[2]))
-    indices = np.reshape(y + dy, (-1, 1)), np.reshape(x + dx, (-1, 1)), np.reshape(z, (-1, 1))
-    x_et = map_coordinates(image, indices, order=1, mode='reflect').reshape(shape)
+    x, y, z = np.meshgrid(np.arange(shape[1]), np.arange(
+        shape[0]), np.arange(shape[2]))
+    indices = np.reshape(y + dy, (-1, 1)), np.reshape(x +
+                                                      dx, (-1, 1)), np.reshape(z, (-1, 1))
+    x_et = map_coordinates(image, indices, order=1,
+                           mode='reflect').reshape(shape)
     if scale_back:
         x_et = x_et * (xrange[1] - xrange[0]) + xrange[0]
     if isinstance(xrange, tuple):
