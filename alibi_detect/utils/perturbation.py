@@ -2,7 +2,7 @@ import random
 from io import BytesIO
 from typing import List, Tuple
 
-import cv2
+#import cv2
 import numpy as np
 import skimage as sk
 import tensorflow as tf
