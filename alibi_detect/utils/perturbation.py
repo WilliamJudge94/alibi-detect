@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 #import cv2
 import numpy as np
-import skimage as sk
+#import skimage as sk
 import tensorflow as tf
 from alibi_detect.utils.data import Bunch
 from alibi_detect.utils.discretizer import Discretizer

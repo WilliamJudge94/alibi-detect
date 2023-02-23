@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_curve, auc
@@ -27,12 +27,15 @@ def plot_instance_score(preds: Dict,
         Min and max y-axis values.
     """
     scores = preds['data']['instance_score']
-    df = pd.DataFrame(dict(idx=np.arange(len(scores)), score=scores, label=target))
+    df = pd.DataFrame(dict(idx=np.arange(len(scores)),
+                      score=scores, label=target))
     groups = df.groupby('label')
     fig, ax = plt.subplots()
     for name, group in groups:
-        ax.plot(group.idx, group.score, marker='o', linestyle='', ms=6, label=labels[name])
-    plt.plot(np.arange(len(scores)), np.ones(len(scores)) * threshold, color='g', label='Threshold')
+        ax.plot(group.idx, group.score, marker='o',
+                linestyle='', ms=6, label=labels[name])
+    plt.plot(np.arange(len(scores)), np.ones(len(scores))
+             * threshold, color='g', label='Threshold')
     plt.ylim(ylim)
     plt.xlabel('Number of Instances')
     plt.ylabel('Instance Level Score')
@@ -207,12 +210,14 @@ def plot_feature_outlier_tabular(od_preds: Dict,
         plt.subplot(n_instances, n_cols, n_subplot)
         if X_recon is not None:
             X_recon_idx = X_recon[idx][keep_cols]
-            plt.bar(ticks - width, X_idx, width=width, color='b', align='center')
+            plt.bar(ticks - width, X_idx, width=width,
+                    color='b', align='center')
             plt.bar(ticks, X_recon_idx, width=width, color='g', align='center')
         else:
             plt.bar(ticks, X_idx, width=width, color='b', align='center')
         if feature_names is not None:
-            plt.xticks(ticks=ticks, labels=list(np.array(feature_names)[keep_cols]), rotation=45)
+            plt.xticks(ticks=ticks, labels=list(
+                np.array(feature_names)[keep_cols]), rotation=45)
         plt.title('Feature Values')
         plt.xlabel('Features')
         plt.ylabel('Feature Values')
@@ -224,7 +229,8 @@ def plot_feature_outlier_tabular(od_preds: Dict,
         if threshold is not None:
             plt.plot(np.ones(len(ticks)) * threshold, 'r')
         if feature_names is not None:
-            plt.xticks(ticks=ticks, labels=list(np.array(feature_names)[keep_cols]), rotation=45)
+            plt.xticks(ticks=ticks, labels=list(
+                np.array(feature_names)[keep_cols]), rotation=45)
         plt.title('Feature Level Outlier Score')
         plt.xlabel('Features')
         plt.ylabel('Outlier Score')
@@ -301,9 +307,11 @@ def plot_feature_outlier_ts(od_preds: Dict,
         elif i == 0:
             plt.title('Data')
 
-        plt.plot(ticks, X[t_start:t_end, i], marker='*', markersize=4, label='Data with Outliers')
+        plt.plot(ticks, X[t_start:t_end, i], marker='*',
+                 markersize=4, label='Data with Outliers')
         if X_orig is not None:
-            plt.plot(ticks, X_orig[t_start:t_end, i], marker='o', markersize=4, label='Data without Outliers')
+            plt.plot(ticks, X_orig[t_start:t_end, i], marker='o',
+                     markersize=4, label='Data without Outliers')
         plt.xlabel('Time')
         plt.ylabel('Observation')
         plt.legend()
@@ -314,7 +322,8 @@ def plot_feature_outlier_ts(od_preds: Dict,
         if i == 0:
             plt.title('Outlier Score per Timestep')
 
-        plt.bar(ticks, scores[t_start:t_end, i], width=width, color='g', align='center', label='Outlier Score')
+        plt.bar(ticks, scores[t_start:t_end, i], width=width,
+                color='g', align='center', label='Outlier Score')
         if isinstance(threshold, (float, int)):
             thr = threshold
         else:
